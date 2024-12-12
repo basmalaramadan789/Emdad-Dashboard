@@ -1,0 +1,203 @@
+﻿
+@{
+    ViewData["Title"] = "Site Issues Dashboard";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h1 class="text-center mb-4">Site Issues Dashboard</h1>
+
+<!-- Search Form -->
+<div class="container">
+    <form method="get" asp-action="Dashboard" class="mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="searchDate" class="col-form-label">Select Date:</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" id="searchDate" name="searchDate" class="form-control" value="@ViewBag.SearchDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Dashboard" class="btn btn-secondary">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="row justify-content-center g-3">
+        <!-- Total Site Issues (Smaller Height) -->
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-lg" style="height: 150px;">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <h5 class="mb-0">Total Site Issues</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="h4">@ViewBag.TotalIssues</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Type -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-success text-white d-flex align-items-center">
+                    <i class="bi bi-tags me-2"></i>
+                    <h4>Grouped by Type</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByType)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.Type</span>
+                                <span>@group.Count</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.Count / (float)ViewBag.TotalIssues * 100)%;" aria-valuenow="@group.Count" aria-valuemin="0" aria-valuemax="@ViewBag.TotalIssues"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Status -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-info text-white d-flex align-items-center">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <h4>Grouped by Status</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByStatus)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.Status</span>
+                                <span>@group.Count</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.Count / (float)ViewBag.TotalIssues * 100)%;" aria-valuenow="@group.Count" aria-valuemin="0" aria-valuemax="@ViewBag.TotalIssues"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Owner -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-warning text-white d-flex align-items-center">
+                    <i class="bi bi-person me-2"></i>
+                    <h4>Grouped by Owner</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByOwner)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.Owner</span>
+                                <span>@group.Count</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.Count / (float)ViewBag.TotalIssues * 100)%;" aria-valuenow="@group.Count" aria-valuemin="0" aria-valuemax="@ViewBag.TotalIssues"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Charts Section -->
+    <div class="row mt-4">
+        <!-- Status Distribution Chart -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Issues by Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Type Distribution Chart -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Issues by Type</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="typeChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Script -->
+    <script>
+        // Parse data from ViewBag
+        const statusGroups = JSON.parse('@Html.Raw(ViewBag.StatusGroups ?? "[]")');
+        const typeGroups = JSON.parse('@Html.Raw(ViewBag.TypeGroups ?? "[]")');
+
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'bar',
+            data: {
+                labels: statusGroups.map(s => s.Status),
+                datasets: [{
+                    label: 'Number of Issues',
+                    data: statusGroups.map(s => s.Count),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, 
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Type Chart
+        const typeCtx = document.getElementById('typeChart').getContext('2d');
+        new Chart(typeCtx, {
+            type: 'pie',
+            data: {
+                labels: typeGroups.map(t => t.Type),
+                datasets: [{
+                    label: 'Number of Issues',
+                    data: typeGroups.map(t => t.Count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false 
+            }
+        });
+    </script>
+

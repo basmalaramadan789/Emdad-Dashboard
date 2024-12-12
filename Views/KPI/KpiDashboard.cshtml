@@ -1,0 +1,340 @@
+﻿@model IEnumerable<Emdad_Dashboard.VeiwModel.KPI.KPIViewModel>
+@{
+    ViewData["Title"] = "KPI Dashboard";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<script src="~/js//jquery-3.5.1.min.js"></script>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 style="color:white" class="card-title">Total Employees</h5>
+                    <p class="card-text">@Model.Count()</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3" >
+                <div class="card-body">
+                    <h5 style="color:white" class="card-title">Average Service Point</h5>
+                    <p class="card-text">@Model.Average(kpi => kpi.ServicePoint)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div  class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 style="color:white" class="card-title">Average Appearance</h5>
+                    <p class="card-text">@Model.Average(kpi => kpi.AppearancePoint)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 style="color:white" class="card-title">Average General Point</h5>
+                    <p class="card-text">@Model.Average(kpi => kpi.GeneralPoint)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 col-lg-12 col-xl-4 d-flex">
+            <div class="card flex-fill dash-statistics">
+                <div class="card-body">
+                    <h5 class="card-title">Last day Attendance</h5>
+                    <div class="stats-list">
+                        <div class="stats-info">
+                            <p>
+                                Excellent <strong>@Model.Count(kpi => kpi.Rate == "Excellent") <small>/ @Model.Count()</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary"
+                                     role="progressbar"
+                                     style="width:@Model.Count(kpi => kpi.Rate == "Excellent")%"
+                                     aria-valuenow="@Model.Count(kpi => kpi.Rate == "Excellent")"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@Model.Count()"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Very Good <strong>@Model.Count(kpi => kpi.Rate == "VeryGood") <small>/ @Model.Count()</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning"
+                                     role="progressbar"
+                                     style="width:@Model.Count(kpi => kpi.Rate == "VeryGood")%"
+                                     aria-valuenow="@Model.Count(kpi => kpi.Rate == "VeryGood")"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@Model.Count()"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Good <strong>@Model.Count(kpi => kpi.Rate == "Good") <small>/ @Model.Count()</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-success"
+                                     role="progressbar"
+                                     style="width:@Model.Count(kpi => kpi.Rate == "Good")%"
+                                     aria-valuenow="@Model.Count(kpi => kpi.Rate == "Good")"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@Model.Count()"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Need Improvement <strong>@Model.Count(kpi => kpi.Rate == "NeedImprovement") <small>/ @Model.Count()</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-info"
+                                     role="progressbar"
+                                     style="width:@Model.Count(kpi => kpi.Rate == "NeedImprovement")%"
+                                     aria-valuenow="@Model.Count(kpi => kpi.Rate == "NeedImprovement")"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@Model.Count()"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">Top Performers</div>
+                <div class="card-body">
+                    <ul>
+                        @foreach (var kpi in Model.OrderByDescending(kpi => kpi.Total).Take(5))
+                        {
+                            <li>@kpi.EmployeeName - @kpi.Total:%</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:none" class="content container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Employee KPI Summary</h3>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Employee Name</th>
+                                <th>Total Points</th>
+                                <th>Total Scores</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kpi-table-body">
+                            <!-- Rows will be inserted dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+        // Fetch KPI data from API
+        $.getJSON('/GetKPISummary', function (data) {
+            // Prepare data for the charts
+            const labels = data.map(item => item.employeeName);
+            const totalPoints = data.map(item => item.totalPoints);
+            const totalScores = data.map(item => item.totalScores);
+            const TotalServicePromesies = data.map(item => item.totalServicePromesies);
+            const TotalAttendane = data.map(item => item.totalAttendane);
+            const TotalGeneralAndBehavior = data.map(item => item.totalGeneralAndBehavior);
+            const TotalAppearence = data.map(item => item.totalAppearence);
+
+            // Bar Chart
+            const barCtx = document.getElementById('kpi-bar-chart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                       
+                        {
+                            label: 'Total Scores',
+                            data: totalScores,
+                            backgroundColor: '#FF9800',
+                        },
+                          {
+                            label: 'Service Promesies Score',
+                            data: TotalServicePromesies,
+                            backgroundColor: 'red',
+                        },
+                        {
+                            label: 'Appearence Score',
+                            data: TotalAppearence,
+                            backgroundColor: 'yellow',
+                        },
+                        {
+                            label: 'General & Behavior Score',
+                            data: TotalGeneralAndBehavior,
+                            backgroundColor: 'grey',
+                        },
+                        {
+                            label: 'Attendane Score',
+                            data: TotalAttendane,
+                            backgroundColor: 'blue',
+                        },
+                       
+                           
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Line Chart
+            const lineCtx = document.getElementById('kpi-line-chart').getContext('2d');
+            new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Points',
+                            data: totalPoints,
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Total Scores',
+                            data: totalScores,
+                            borderColor: '#FF9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        },
+
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Pie Chart
+            const pieCtx = document.getElementById('kpi-pie-chart').getContext('2d');
+            new Chart(pieCtx, {
+                type: 'pie', // Keep as 'pie' to display a pie chart
+                data: {
+                    labels: [
+                         
+                        'Service Promises Score',
+                        'Appearance Score',
+                        'General & Behavior Score',
+                        'Attendance Score'
+                    ], // Labels for each section of the pie chart
+                    datasets: [
+                        {
+                            label: 'KPI Overview',
+                            data: [
+                              
+                                TotalServicePromesies.reduce((a, b) => a + b, 0), // Service Promises Score
+                                TotalAppearence.reduce((a, b) => a + b, 0), // Appearance Score
+                                TotalGeneralAndBehavior.reduce((a, b) => a + b, 0), // General & Behavior Score
+                                TotalAttendane.reduce((a, b) => a + b, 0) // Attendance Score
+                            ], // Data for each pie slice
+                            backgroundColor: [
+                                '#FF9800', // Total Scores
+                                'red', // Service Promises Score
+                                'yellow', // Appearance Score
+                                'grey', // General & Behavior Score
+                                'blue' // Attendance Score
+                            ], // Colors for each slice
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+        });
+        $.getJSON('/GetKPISummary', function (data) {
+            const tableBody = $("#kpi-table-body");
+
+            // Populate table rows
+            data.forEach(item => {
+                const row = `
+                    <tr>
+                        <td>${item.employeeName}</td>
+                        <td>${item.totalPoints}</td>
+                        <td>${item.totalScores}</td>
+                    </tr>
+                `;
+                tableBody.append(row);
+            });
+        });
+    });
+</script>
+<div class="content container-fluid">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Employee KPI Summary</h3>
+                    <!-- Bar Chart -->  
+                    <canvas id="kpi-bar-chart"></canvas>
+                    <!-- Line Chart -->
+                   
+                </div>
+            </div>
+        </div>
+        <div style="display:none" class="col-md-4 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Employee KPI Summary</h3>
+                    <!-- Bar Chart -->
+                    <canvas id="kpi-line-chart"></canvas>
+                    <!-- Line Chart -->
+
+                </div>
+            </div>
+        </div>
+        <div style="display:none"  class="col-md-4 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Employee KPI Summary</h3>
+                    <!-- Bar Chart -->
+                    <canvas id="kpi-pie-chart"></canvas>
+                    <!-- Line Chart -->
+
+                </div>
+            </div>
+        </div>
+       
+        <!-- Pie Chart -->
+       
+    </div>
+</div>
+

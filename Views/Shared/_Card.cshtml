@@ -1,0 +1,19 @@
+﻿@model Emdad_Dashboard.VeiwModel.Dashboard.Card
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
+    <div class="card dash-widget">
+        <div class="card-body">
+            <span class="dash-widget-icon">
+                <i class="@Model.Icon"></i>
+            </span>
+            <div class="dash-widget-info">
+                <h3>@Model.Number</h3>
+                <span>@Model.CardName</span>
+            </div>
+        </div>
+    </div>
+</div>

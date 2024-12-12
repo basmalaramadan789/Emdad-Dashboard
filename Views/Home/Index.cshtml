@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<script src="~/js//jquery-3.5.1.min.js"></script>
+    <script src="~/js/chart.js"></script>
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-sm-12">
+                <h3 class="page-title">Welcome Emdad Co!</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 col-lg-12 col-xl-4 d-flex">
+            <div class="card flex-fill dash-statistics">
+                <div class="card-body">
+                    <h5 class="card-title">Last day Attendance</h5>
+                    <div class="stats-list">
+                        <div class="stats-info">
+                            <p>
+                                Attendance <strong>@(ViewBag.EmployeeAttend?.Count ?? 0) <small>/ @(ViewBag.All?.Count ?? 0)</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary"
+                                     role="progressbar"
+                                     style="width: @(ViewBag.EmployeeAttend != null && ViewBag.All?.Count > 0
+                     ? ViewBag.EmployeeAttend.Count * 100 / ViewBag.All.Count : 0)%"
+                                     aria-valuenow="@(ViewBag.EmployeeAttend?.Count ?? 0)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@(ViewBag.All?.Count ?? 0)"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Absent <strong>@(ViewBag.EmployeeAbsent?.Count ?? 0) <small>/ @(ViewBag.All?.Count ?? 0)</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning"
+                                     role="progressbar"
+                                     style="width: @(ViewBag.EmployeeAbsent != null && ViewBag.All?.Count > 0
+                     ? ViewBag.EmployeeAbsent.Count * 100 / ViewBag.All.Count : 0)%"
+                                     aria-valuenow="@(ViewBag.EmployeeAbsent?.Count ?? 0)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@(ViewBag.All?.Count ?? 0)"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Off <strong>@(ViewBag.EmployeeOff?.Count ?? 0) <small>/ @(ViewBag.All?.Count ?? 0)</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-success"
+                                     role="progressbar"
+                                     style="width: @(ViewBag.EmployeeOff != null && ViewBag.All?.Count > 0
+                     ? ViewBag.EmployeeOff.Count * 100 / ViewBag.All.Count : 0)%"
+                                     aria-valuenow="@(ViewBag.EmployeeOff?.Count ?? 0)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@(ViewBag.All?.Count ?? 0)"></div>
+                            </div>
+                        </div>
+                        <div class="stats-info">
+                            <p>
+                                Absent With Excuse <strong>@(ViewBag.EmployeeAbsentWithExcuse?.Count ?? 0) <small>/ @(ViewBag.All?.Count ?? 0)</small></strong>
+                            </p>
+                            <div class="progress">
+                                <div class="progress-bar bg-info"
+                                     role="progressbar"
+                                     style="width: @(ViewBag.EmployeeAbsentWithExcuse != null && ViewBag.All?.Count > 0
+                     ? ViewBag.EmployeeAbsentWithExcuse.Count * 100 / ViewBag.All.Count : 0)%"
+                                     aria-valuenow="@(ViewBag.EmployeeAbsentWithExcuse?.Count ?? 0)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="@(ViewBag.All?.Count ?? 0)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+     
+        <div class="col-md-12 col-lg-6 col-xl-4 d-flex">
+            <div class="card flex-fill">
+                <div class="card-body" style="overflow:scroll;height:300px">
+                    <h4 class="card-title">
+                        Last day Absents
+                        @{
+                            <span class="badge bg-inverse-danger ml-2">@ViewBag.EmployeeAbsent.Count</span>
+
+                        }
+                    </h4>
+                    @foreach (var employee in ViewBag.EmployeeAbsent)
+                    {
+                        <div class="leave-info-box">
+                            <div class="media align-items-center">
+                                <div class="media-body">
+                                    <div class="text-sm my-0">@employee.Name</div>
+                                </div>
+                            </div>
+
+                  
+                        </div>
+                    }
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-lg-6 col-xl-4 d-flex">
+            <div class="card flex-fill">
+                <div class="card-body" style="overflow:scroll;height:300px">
+                    <h4 class="card-title">
+                        Last day OFF
+                        @{
+                            <span class="badge bg-inverse-danger ml-2">@ViewBag.EmployeeOff.Count</span>
+
+                        }
+                    </h4>
+                    @foreach (var employee in ViewBag.EmployeeOff)
+                    {
+                        <div class="leave-info-box">
+                            <div class="media align-items-center">
+                                <div class="media-body">
+                                    <div class="text-sm my-0">@employee.Name</div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="row">
+                <div class="col-md-8 text-center">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Attendance OverView</h3>
+
+                            <canvas id="bar-charts"></canvas>
+                        </div>
+                    </div>
+                </div>
+           
+                <div class="col-md-4 text-center">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Attendance Distribution</h3>
+                            <canvas id="pie-chart"></canvas> <!-- Canvas for Pie Chart -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="row">
+         
+</div>
+        </div>

@@ -1,0 +1,508 @@
+﻿@model Emdad_Dashboard.VeiwModel.Attendance.AttendanceViewModel
+@{
+    ViewData["Title"] = "Attendance Page";
+}
+<div style="display:none">
+      <canvas id="pie-chart"></canvas> <!-- Canvas for Pie Chart -->
+   <canvas id="bar-charts"></canvas>
+
+</div>
+
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-sm-12">
+                <h3 class="page-title">Attendance</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="index.html">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item active">Attendance</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-info">
+                <h6>Total Days Presents</h6>
+                <h4>@((int)ViewBag.TotalPresent)</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-info">
+                <h6>Total Days</h6>
+                <h4>@((int)ViewBag.datesCount) <span>Day</span></h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-info">
+                <h6>Employees Number</h6>
+                <h4>@((int)ViewBag.EmployeeCount) <span>Today</span></h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-info">
+                <h6>Position Number</h6>
+                <h4>@((int)ViewBag.PositionCount)</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row filter-row ">
+       @*  <div class="col-sm-6 col-md-3">
+            <div class="form-group form-focus">
+                <input id="search" type="text" class="form-control floating" placeholder="Search Employee..." />
+                <label class="focus-label">Employee Name</label>
+            </div>
+        </div> *@
+
+
+        <div class="col-sm-2 col-md-2">
+            <button  type="button"
+                    data-toggle="modal"
+                    data-target="#add_custom_policy" class="btn btn-primary w-100" style="font-size:13px">
+                Upload Excel
+            </button>
+        </div>
+    @*     <div class="col-sm-2 col-md-2">
+            <button type="button"
+                    class="btn btn-primary ">
+                <a asp-controller="Attendance" asp-action="WeeklyReport" style="color:white;font-size:13px"> Export Report </a>
+            </button>
+        </div> *@
+        <div class="col-sm-2 col-md-2">
+            <button type="button"
+                    data-toggle="modal"
+                    data-target="#upload_daily_report" class="btn btn-primary w-100" style="font-size:13px">
+                Upload Daily
+            </button>
+        </div>
+        <div class="col-3  d-flex ms-auto float-end">
+            <div class="card flex-fill w-100">
+@*                 <div class="card-header">
+                    <h5 class="card-title mb-0 fs-5">Card with list</h5>
+                </div> *@
+                <div class="d-flex gap-3">
+                    <div class="w-auto"> <span style="color: rgb(255, 231, 165);">O</span> Offday | </div> 
+                    <div class=""><span style="color:#ffd43b"> E</span> Absent with excute | </div> 
+                    <div class=""> <span style="color:#ffee00;"> V</span> leave</div>
+                </div>
+                @*< ul class="d-flex flex-row">
+                    <li class="w-auto"> <span style="color: rgb(255, 231, 165);">O</span> Offday</li>
+                    <li class=""><span style="color:#ffd43b">E</span> Absent with excute</li>
+                    <li class=""> <span style="color:#ffee00;">V</span> leave</li>
+                </ul> *@
+            </div>
+        </div>
+       @*  <div class="col-sm-6 col-md-3">
+            <a href="#" class="btn btn-success btn-block"> Search </a>
+        </div> *@
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="table-responsive">
+                <table class="table table-striped custom-table table-nowrap mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Position</th>
+                            <th>Shift</th>
+                            @if (ViewBag.dates != null && ViewBag.dates.Count > 0)
+                            {
+                                foreach (var date in (List<DateOnly>)ViewBag.dates)
+                                {
+                                    var id = ((List<Attendance>)ViewBag.attendances).Where(x => x.DateOnly == date).Select(x => x.Id).FirstOrDefault().ToString();
+                                    <th class="dateClick" data-toggle="modal" id="date" data-target="#attendance_info" data-id="@id" style="cursor:pointer;"
+                                        data-date="@date.ToString("M/d")"> <br> @date.ToString("M/d")</th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.attendances != null)
+                        {
+                            List<string> uniqueNames = new();
+                            var groupedAttendances = ((List<Attendance>)ViewBag.attendances)
+                            .GroupBy(a => a.Name)
+                            .ToList();
+
+                            foreach (var group in groupedAttendances)
+                            {
+                                var representative = group.First();
+                                <tr>
+                                    <td>
+                                        <h2 class="table-avatar">
+                                            <a href="profile.html">@representative.Name</a>
+                                        </h2>
+                                    </td>
+                                    <td>@representative.Position</td>
+                                    <td>@representative.Shift</td>
+                                    @foreach (var date in (List<DateOnly>)ViewBag.dates)
+                                    {
+                                        var attendanceForDate = group.FirstOrDefault(a => a.DateOnly == date);
+                                        <td data-date="@date.ToString("MM/dd/yyyy")" class="attendance-cell">
+                                            @if (attendanceForDate != null)
+                                            {
+                                                switch (attendanceForDate.Status.ToString().ToUpper())
+                                                {
+                                                    case "P":
+                                                        <i class="fa fa-check text-success"></i>
+                                                        break;
+                                                    case "U":
+                                                        <i class="fa fa-close text-danger"></i>
+                                                        break;
+                                                    case "E":
+                                                        <i class="fa-solid fa-e" style="color:#ffd43b"></i>
+                                                        break;
+                                                    case "V":
+                                                        <i class="fa-solid fa-v" style="color:#ffee00;"></i>
+                                                        break;
+                                                    case "O":
+                                                        <span style="color: rgb(255, 231, 165);">O</span>
+                                                        break;
+                                                    case "OV":
+                                                        <span style="color: rgb(255, 231, 165);">OV</span>
+                                                        break;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span> <!-- Empty cell if no data for this date -->
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+
+
+            </div>
+        </div>
+    </div>
+
+        <h3 class="fs-3 my-4 border border-2 p-3"> Backup Table</h3>
+    
+        
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="table-responsive">
+                    <table class="table table-striped custom-table table-nowrap mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                            <th>Position</th>
+                            <th>Shift</th>
+                            @if (ViewBag.dates != null && ViewBag.dates.Count > 0)
+                            {
+                                foreach (var date in (List<DateOnly>)ViewBag.dates)
+                                {
+                                    var id = ((List<Backup>)ViewBag.Backup).Where(x => x.DateOnly == date).Select(x => x.Id).FirstOrDefault().ToString();
+                                    <th   data-id="@id" 
+                                        data-date="@date.ToString("M/d")"> <br> @date.ToString("M/d")</th>
+                                }
+                            }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.Backup != null)
+                            {
+                                List<string> uniqueNames = new();
+                                var groupedAttendances = ((List<Backup>)ViewBag.Backup)
+                                .GroupBy(a => a.Name)
+                                .ToList();
+
+                                foreach (var group in groupedAttendances)
+                                {
+                                    var representative = group.First();
+                                    <tr>
+                                        <td>
+                                            <h2 class="table-avatar">
+                                                <a href="profile.html">@representative.Name</a>
+                                            </h2>
+                                        </td>
+                                    <td>@representative.Position</td>
+                                    <td>@representative.Shift</td>
+                                    @foreach (var date in (List<DateOnly>)ViewBag.dates)
+                                    {
+                                        var attendanceForDate = group.FirstOrDefault(a => a.DateOnly == date);
+                                        <td data-date="@date.ToString("MM/dd/yyyy")" class="attendance-cell">
+                                            @if (attendanceForDate != null)
+                                            {
+                                                switch (attendanceForDate.Status.ToString().ToUpper())
+                                                {
+                                                    case "P":
+                                                        <i class="fa fa-check text-success"></i>
+                                                        break;
+                                                    case "U":
+                                                        <i class="fa fa-close text-danger"></i>
+                                                        break;
+                                                    case "E":
+                                                        <i class="fa-solid fa-e" style="color:#ffd43b"></i>
+                                                        break;
+                                                    case "V":
+                                                        <i class="fa-solid fa-v" style="color:#ffee00;"></i>
+                                                        break;
+                                                    case "O":
+                                                        <span style="color: rgb(255, 231, 165);">O</span>
+                                                        break;
+                                                    case "OV":
+                                                        <span style="color: rgb(255, 231, 165);">OV</span>
+                                                        break;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span> <!-- Empty cell if no data for this date -->
+                                            }
+                                        </td>
+                                    }
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+
+
+                </div>
+            </div>
+        </div>
+    
+
+</div>
+
+
+<!-- Modal for updating attendance date -->
+<div class="modal custom-modal fade" id="attendance_info" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Attendance Date</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateDateForm">
+                <div class="modal-body w-100 d-flex flex-column justify-content-center align-items-center">
+                    <div class="w-100">
+                        <div class="card flex-fill">
+                            <div class="card-body">
+                                <h4 class="card-title">Task Statistics</h4>
+                                <div class="statistics">
+                                    <div class="row">
+                                        <div class="col-md-6 col-6 text-center">
+                                            <div class="stats-box mb-4">
+                                                <p>Total Attendance</p>
+                                                <h3 id="totalAttendance">385</h3>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-6 text-center">
+                                            <div class="stats-box mb-4">
+                                                <p>Total Absent</p>
+                                                <h3 id="absent">19</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="progress mb-4">
+                                    <div id="attendancePercentage"
+                                        class="progress-bar bg-purple"
+                                         role="progressbar"
+                                         style="width: 30%"
+                                         aria-valuenow="30"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        30%
+                                    </div>
+                                    <div id="offPercentage"
+                                         class="progress-bar bg-warning"
+                                         role="progressbar"
+                                         style="width: 22%"
+                                         aria-valuenow="18"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        22%
+                                    </div>
+                                    <div id="absentExcusePercentage"
+                                         class="progress-bar bg-success"
+                                         role="progressbar"
+                                         style="width: 24%"
+                                         aria-valuenow="12"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        24%
+                                    </div>
+                                    <div id="absentPercentage"
+                                         class="progress-bar bg-danger"
+                                         role="progressbar"
+                                         style="width: 26%"
+                                         aria-valuenow="14"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        21%
+                                    </div>
+                                    <div id="leavePercentage"
+                                         class="progress-bar bg-info"
+                                         role="progressbar"
+                                         style="width: 10%"
+                                         aria-valuenow="14"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                        10%
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>
+                                        <i class="fa fa-dot-circle-o text-purple mr-2" aria-hidden="true"></i>Attendance <span id="attendanceCount" class="float-right">166</span>
+                                    </p>
+                                    <p>
+                                        <i class="fa fa-dot-circle-o text-warning mr-2"></i>Absent <span id="absentCount" class="float-right">115</span>
+                                    </p>
+                                    <p>
+                                        <i class="fa fa-dot-circle-o text-success mr-2"></i>Absent With Excute
+                                         <span id="absentWithExcute" class="float-right">31</span>
+                                    </p>
+                                    <p>
+                                        <i class="fa fa-dot-circle-o text-danger mr-2"></i>Off
+                                         <span id="offCount" class="float-right">47</span>
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fa fa-dot-circle-o text-info mr-2"></i>Leave
+                                         <span id="leaveCount" class="float-right">5</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-100 d-flex flex-column align-items-center">
+                        <div class="w-50 mb-3">
+                            <label for="oldDate" class="form-label">Old Date</label>
+                            <input type="text" id="oldDate" name="oldDate" class="form-control" required readonly />
+                        </div>
+                        <div class="w-50 mb-3">
+                            <label for="newDate" class="form-label">New Date</label>
+                            <input type="date" id="newDate" name="newDate" class="form-control" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Date</button>
+                </div>
+            </form>
+            <form id="uploadForm" class="d-flex justify-content-center my-4" enctype="multipart/form-data">
+                <input type="text" name="name" value="" id="dateValue"  style="display:none"/>
+                <input type="file" id="pdfFile" name="file"  accept="application/pdf" data-date="" />
+                <button class="btn btn-secondary" type="submit">Upload Attendance Daily PDF</button>
+            </form>
+            <div class="modal-footer">
+                <button class="DeleteBtn btn btn-danger" id="deletebtn" data-date="2023-12-01" type="button">
+                    Delete
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+      @* Update Column *@
+
+<div id="add_custom_policy"
+     class="modal custom-modal fade"
+     role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg"
+         role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Attendance Excel</h5>
+                <button type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("Index", "Attendance", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="col-sm-12">
+                       
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-2">File Input</label>
+                            <div class="col-md-10">
+                                <input class="form-control" type="file" name="UploadedFile" />
+                                @Html.ValidationMessageFor(m => m.UploadedFile, null, new { @class = "text-danger" })
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Read Excel File</button>
+                }
+                <div class="text-success mt-2">
+                    @ViewBag.Message
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="upload_daily_report" class="modal custom-modal fade" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload General Daily Report</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadGeneralDailypdfForm">
+                    <div class="form-group row">
+                        <label for="pdfFile2" class="col-form-label col-md-2">Select File</label>
+                        <div class="col-md-10">
+                            <input type="file" id="pdfFile2" name="pdfFile2" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="dateValue2" class="col-form-label col-md-2">Select Date</label>
+                        <div class="col-md-10">
+                            <input type="date" id="dateValue2" name="dateValue2" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="shiftValue" class="col-form-label col-md-2">Select Shift</label>
+                        <div class="col-md-10">
+                            <select id="shiftValue" name="shiftValue" class="form-control" required>
+                                <option value="">Select Shift</option>
+                                <option value="A">Shift A</option>
+                                <option value="B">Shift B</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group text-right">
+                        <button type="submit" class="btn btn-success">Upload</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/uploadFormHandler.js"></script>
+}
+
+
+
+
+
+

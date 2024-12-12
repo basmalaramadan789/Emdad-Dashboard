@@ -1,0 +1,46 @@
+﻿@model List<Emdad_Dashboard.VeiwModel.Attendance.WeeklyAttendanceReportViewModel>
+
+@{
+    ViewBag.Title = "Weekly Attendance Report";
+}
+
+<div class="container">
+    <h1>Weekly Attendance Report</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Employee Name</th>
+                <th>Total Days</th>
+                <th>Present Days</th>
+                <th>Absent Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var report in Model)
+            {
+                <tr>
+                    <td>@report.EmployeeName</td>
+                    <td>@report.TotalDays</td>
+                    <td>@report.PresentDays</td>
+                    <td>@report.AbsentDays</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button class="btn btn-primary" onclick="window.print()">Print Report</button>
+</div>
+
+
+<script>
+    function printTable() {
+        var printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write('<html><head><title>Attendance Report</title>');
+        printWindow.document.write('<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write('<h2>Attendance Report</h2>');
+        printWindow.document.write(document.getElementById('attendanceTable').outerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>

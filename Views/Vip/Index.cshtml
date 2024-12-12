@@ -1,0 +1,279 @@
+﻿@* @model List<Emdad_Dashboard.VeiwModel.Vip.VipViewModel>
+
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-sm-12">
+                <h3 class="page-title">VIP Visits</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="index.html">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item active">VIP Visits</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row filter-row">
+        <div class="col-sm-2 col-md-2">
+            <button type="button"
+                    data-toggle="modal"
+                    data-target="#add_vip" class="btn btn-primary" style="font-size:13px">
+                Import Excel
+            </button>
+        </div>
+
+
+
+        <div class="col-sm-4 col-md-4">
+            <form method="get" action="@Url.Action("Index")" class="form-inline">
+                <div class="form-group">
+                    <label for="filterDate">Filter by Date:</label>
+                    <input type="date" class="form-control" id="filterDate" name="filterDate" value="@Context.Request.Query["filterDate"]">
+                </div>
+                <button type="submit" class="btn btn-success">Filter</button>
+            </form>
+        </div>
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="table-responsive">
+                <table class="table table-striped custom-table table-nowrap mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Visitors</th>
+                            <th>Visit Date</th>
+                            <th>Visit Per Day</th>
+                            <th>Arrival Time</th>
+                            <th>Contact Details</th>
+                            <th>Reservation Details</th>
+                            <th>Visit Type</th>
+                            <th>Gate</th>
+                            <th>Visit Details</th>
+                            <th>Feedback</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var vip in Model)
+                            {
+                                <tr>
+                                    <td>@vip.Name</td>
+                                    <td>@vip.Visitors</td>
+                                    <td>@(vip.VisitDate?.ToShortDateString() ?? "N/A")</td>
+                                    <td>@vip.VisitPerDay</td>
+                                    <td>@vip.ArrivalTime</td>
+                                    <td>@vip.ContactDetails</td>
+                                    <td>@vip.ReservationDetails</td>
+                                    <td>@vip.VisitType</td>
+                                    <td>@vip.Gate</td>
+                                    <td>@vip.VisitDetails</td>
+                                    <td>@vip.Feedback</td>
+                                    <td>@vip.Remarks</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="12" class="text-center">No VIP visits found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="add_vip"
+     class="modal custom-modal fade"
+     role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg"
+         role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload VIP Visits</h5>
+                <button type="button"
+                        class="close"
+                        data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("Index", "Vip", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="col-sm-12">
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-2">File Input</label>
+                            <div class="col-md-10">
+                                <input class="form-control" type="file" name="UploadedFile" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Upload Excel File</button>
+                }
+                <div class="text-success mt-2">
+                    @ViewBag.Message
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+ *@
+
+
+
+
+
+
+@model List<Emdad_Dashboard.VeiwModel.Vip.VipViewModel>
+
+
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-sm-12 text-center">
+                <!-- Center the content -->
+                <h1 class="text-center mb-4">VIP Visits </h1> <!-- Title in the middle -->
+            </div>
+        </div>
+    </div>
+
+    <div class="row filter-row mb-4">
+        <div class="col-sm-12">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="button" data-toggle="modal" data-target="#add_vip" class="btn btn-primary" style="font-size:13px">
+                        Upload Vip Visits Excel
+                    </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <!-- Filter Form -->
+                    <form method="get" action="@Url.Action("Index")" class="form-inline">
+                        <div class="form-group">
+                            <label for="filterDate">Filter by Date:</label>
+                            <input type="date" class="form-control" id="filterDate" name="filterDate" value="@Context.Request.Query["filterDate"]">
+                        </div>
+                        <button type="submit" class="btn btn-success ms-2">Search</button>
+                        <!-- Reset Button -->
+                        <a href="@Url.Action("Index")" class="btn btn-secondary ms-2">View All</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-12">
+            <div class="table-responsive">
+                <table class="table table-striped custom-table table-nowrap mb-0">
+                    <colgroup>
+                        <col style="width:15%;">
+                        <!-- Add styles for other columns if needed -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Visitors</th>
+                            <th>Visit Date</th>
+                            <th>Visit Per Day</th>
+                            <th>Arrival Time</th>
+                            <th>Contact Details</th>
+                            <th>Reservation Details</th>
+                            <th>Visit Type</th>
+                            <th>Gate</th>
+                            <th>Visit Details</th>
+                            <th>Feedback</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var vip in Model)
+                            {
+                                <tr>
+                                    <td>@vip.Name</td>
+                                    <td>@vip.Visitors</td>
+                                    <td>@(vip.VisitDate?.ToShortDateString() ?? "N/A")</td>
+                                    <td>@vip.VisitPerDay</td>
+                                    <td>@vip.ArrivalTime</td>
+                                    <td>@vip.ContactDetails</td>
+                                    <td>@vip.ReservationDetails</td>
+                                    <td>@vip.VisitType</td>
+                                    <td>@vip.Gate</td>
+                                    <td>@vip.VisitDetails</td>
+                                    <td>@vip.Feedback</td>
+                                    <td>@vip.Remarks</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="12" class="text-center">No VIP visits found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="add_vip" class="modal custom-modal fade" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload VIP Visits</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("Index", "Vip", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="col-sm-12">
+                        <div class="form-group row">
+                            <label class="col-form-label col-md-2">File Input</label>
+                            <div class="col-md-10">
+                                <input class="form-control" type="file" name="UploadedFile" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Upload Excel File</button>
+                }
+                <div class="text-success mt-2">
+                    @ViewBag.Message
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ensure Name column width is narrowed without affecting header background */
+    table th:nth-child(1), table td:nth-child(1) {
+        width: 15%;
+    }
+    /* Override background color for header if necessary */
+    table thead th {
+        background-color: inherit; /* or specify the desired background color */
+    }
+    /* Add margin to the left of the filter button */
+    .btn-success {
+        margin-right: 10px; /* Add space between Filter and Reset buttons */
+    }
+</style>

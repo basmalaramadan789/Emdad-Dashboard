@@ -1,0 +1,99 @@
+﻿@using Emdad_Dashboard.VeiwModel.Attendance
+@model GeneralDailyReportModel
+
+@{
+    ViewData["Title"] = "General Daily Report Viewer";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">General Daily Report Viewer</h2>
+
+    <!-- Report Form -->
+    <form asp-action="GeneralDailyReport" asp-controller="Report" method="post">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <input type="text" id="generalDailyDatePicker" name="SelectedDate" class="form-control" 
+                       value="@Model.SelectedDate.ToString("yyyy-MM-dd")" placeholder="Select Date" />
+            </div>
+            <div class="col-md-3">
+                <select id="shiftSelector" name="SelectedShift" class="form-control">
+                    @if (Model.SelectedShift == "A")
+                    {
+                        <option value="A" selected>Shift A</option>
+                        <option value="B">Shift B</option>
+                    }
+                    else if (Model.SelectedShift == "B")
+                    {
+                        <option value="A">Shift A</option>
+                        <option value="B" selected>Shift B</option>
+                    }
+                    else
+                    {
+                        <option value="A">Shift A</option>
+                        <option value="B">Shift B</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 text-md-end text-center">
+                <button type="submit" class="btn btn-primary w-100">View Report</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- PDF Viewer -->
+    <div id="pdfViewerContainer" class="mt-5">
+        <div id="pdfViewer" class="pdf-viewer">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize date picker
+    flatpickr("#generalDailyDatePicker", { dateFormat: "Y-m-d" });
+
+    // Function to load PDF using PDF.js
+    function loadPdf(pdfPath) {
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+
+        pdfjsLib.getDocument(pdfPath).promise.then(function (pdfDoc) {
+            pdfViewer.innerHTML = ''; // Clear previous content
+            for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
+                pdfDoc.getPage(pageNumber).then(function (page) {
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                        pdfViewer.appendChild(canvas);
+                    });
+                });
+            }
+        }).catch(err => console.error("Error loading PDF:", err));
+    }
+
+    // Load initial PDF if available
+    const pdfPath = '@Model.PdfFilePath';
+    if (pdfPath) {
+        loadPdf(pdfPath);
+    }
+</script>
+
+<style>
+    .pdf-viewer {
+        border: 2px solid #223f51;
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f4f4f4;
+    }
+</style>

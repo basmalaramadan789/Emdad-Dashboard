@@ -1,0 +1,208 @@
+﻿@using Emdad_Dashboard.VeiwModel.Attendance
+@model DailyReportModel
+
+@{
+    ViewData["Title"] = "Report Viewer";
+}
+
+<!-- Include external libraries for date picker and PDF.js -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Attendance Report Viewer</h2>
+
+    <!-- Toggle Buttons for Report Type -->
+    <div class="btn-group mb-4 w-100" role="group" id="reportTypeToggle">
+        <input type="radio" class="btn-check" name="reportType" id="dailyToggle" autocomplete="off" value="daily" checked>
+        <label class="btn btn-outline-primary" for="dailyToggle">Daily</label>
+
+        <input type="radio" class="btn-check" name="reportType" id="weeklyToggle" autocomplete="off" value="weekly">
+        <label class="btn btn-outline-primary" for="weeklyToggle">Weekly</label>
+
+        <input type="radio" class="btn-check" name="reportType" id="monthlyToggle" autocomplete="off" value="monthly">
+        <label class="btn btn-outline-primary" for="monthlyToggle">Monthly</label>
+    </div>
+
+    <!-- Report Selection Forms -->
+    <div id="reportSelectors">
+        <!-- Daily Report -->
+        <div id="dailyReportSelector" class="report-selector">
+            <form asp-action="DailyReport" asp-controller="Report" method="post">
+                <input type="hidden" name="ReportType" value="daily" />
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-9">
+                        <input type="text" id="dailyDatePicker" name="SelectedDate" class="form-control" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" placeholder="Select Date" />
+                    </div>
+                    <div class="col-md-3 text-md-end text-center">
+                        <button type="submit" class="btn btn-primary w-100">View Report</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Weekly Report -->
+        <div id="weeklyReportSelector" class="report-selector d-none">
+            <form asp-action="DailyReport" asp-controller="Report" method="post">
+                <input type="hidden" name="ReportType" value="weekly" />
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="weeklyYear" class="form-label">Year</label>
+                        <select class="form-select custom-select" id="weeklyYear" name="Year">
+                            @for (int year = 2020; year <= DateTime.Now.Year; year++)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="weeklyMonth" class="form-label">Month</label>
+                        <select class="form-select custom-select" id="weeklyMonth" name="Month">
+                            @for (int month = 1; month <= 12; month++)
+                            {
+                                <option value="@month">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="weeklyNumber" class="form-label">Week</label>
+                        <select class="form-select custom-select" id="weeklyNumber" name="Week">
+                            @for (int week = 1; week <= 5; week++)
+                            {
+                                <option value="@week">Week @week</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">View Report</button>
+            </form>
+        </div>
+
+        <!-- Monthly Report -->
+        <div id="monthlyReportSelector" class="report-selector d-none">
+            <form asp-action="DailyReport" asp-controller="Report" method="post">
+                <input type="hidden" name="ReportType" value="monthly" />
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="monthlyYear" class="form-label">Year</label>
+                        <select class="form-select custom-select" id="monthlyYear" name="Year">
+                            @for (int year = 2020; year <= DateTime.Now.Year; year++)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="monthlyMonth" class="form-label">Month</label>
+                        <select class="form-select custom-select" id="monthlyMonth" name="Month">
+                            @for (int month = 1; month <= 12; month++)
+                            {
+                                <option value="@month">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">View Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div id="pdfViewerContainer" class="mt-5">
+        <div id="pdfViewer" class="pdf-viewer">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize date picker for Daily Report
+    flatpickr("#dailyDatePicker", { dateFormat: "Y-m-d" });
+
+    // Toggle between report types
+    document.querySelectorAll("input[name='reportType']").forEach(input => {
+        input.addEventListener("change", function () {
+            document.querySelectorAll(".report-selector").forEach(selector => {
+                selector.classList.add("d-none");
+            });
+
+            const selectedType = this.value;
+            document.getElementById(`${selectedType}ReportSelector`).classList.remove("d-none");
+        });
+    });
+
+    // Function to load PDF using PDF.js
+    function loadPdf(pdfPath) {
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+
+        pdfjsLib.getDocument(pdfPath).promise.then(function (pdfDoc) {
+            pdfViewer.innerHTML = ''; // Clear previous content
+            for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
+                pdfDoc.getPage(pageNumber).then(function (page) {
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
+                        pdfViewer.appendChild(canvas);
+                    });
+                });
+            }
+        }).catch(err => console.error("Error loading PDF:", err));
+    }
+
+    // Load initial PDF if available
+    const pdfPath = '@Model.PdfFilePath';
+    if (pdfPath) {
+        loadPdf(pdfPath);
+    }
+</script>
+
+<style>
+    .pdf-viewer {
+        border: 2px solid #223f51;
+        height: 600px;
+        overflow-y: auto;
+        background-color: #f4f4f4;
+    }
+
+    .report-selector {
+        display: none;
+    }
+
+        .report-selector:not(.d-none) {
+            display: block;
+        }
+
+    .custom-select {
+        width: 100%;
+        transition: all 0.3s ease-in-out;
+    }
+
+        .custom-select:focus {
+            box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
+            border-color: #38b6ff;
+        }
+
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-select {
+        font-size: 1rem;
+        padding: 0.5rem;
+    }
+
+        .form-select:focus {
+            border-color: #38b6ff;
+            box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
+        }
+</style>

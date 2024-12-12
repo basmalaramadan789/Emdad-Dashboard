@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34902.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emdad-Dashboard", "Emdad-Dashboard.csproj", "{2AAF641C-0E58-4B20-ACD8-C16C2233DA7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2AAF641C-0E58-4B20-ACD8-C16C2233DA7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AAF641C-0E58-4B20-ACD8-C16C2233DA7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AAF641C-0E58-4B20-ACD8-C16C2233DA7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AAF641C-0E58-4B20-ACD8-C16C2233DA7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {42F50D7C-550C-4DE0-8096-0F6C3EB17617}
+	EndGlobalSection
+EndGlobal

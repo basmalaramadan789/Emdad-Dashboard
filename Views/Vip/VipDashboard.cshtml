@@ -1,0 +1,285 @@
+﻿
+
+@{
+    ViewData["Title"] = "VIP Dashboard";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h1 class="text-center mb-4">VIP Visits Dashboard</h1>
+
+<!-- Search Form -->
+<div class="container">
+    <form method="get" asp-action="VipDashboard" class="mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="searchDate" class="col-form-label">Select Date:</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" id="searchDate" name="searchDate" class="form-control" value="@ViewBag.SearchDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+            <div class="col-auto">
+                <a asp-action="VipDashboard" class="btn btn-secondary">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Combined Row for Total VIP Visits and Grouped Data -->
+    <div class="row justify-content-center g-3">
+        <!-- Total VIP Visits Card (Smaller Height) -->
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-lg" style="height: 150px;">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-people me-2"></i>
+                    <h5 class="mb-0">Total VIP Visits</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-6">@ViewBag.TotalVips</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by VisitType -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-success text-white d-flex align-items-center">
+                    <i class="bi bi-tags me-2"></i>
+                    <h4>Visits by Visit Type</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByVisitType)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.VisitType</span>
+                                <span>@group.TotalVisitors</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.TotalVisitors / (float)ViewBag.TotalVips * 100)%;" aria-valuenow="@group.TotalVisitors" aria-valuemin="0" aria-valuemax="@ViewBag.TotalVips"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Gate -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-info text-white d-flex align-items-center">
+                    <i class="bi bi-signpost me-2"></i>
+                    <h4>Visits by Gate</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByGate)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.Gate</span>
+                                <span>@group.TotalVisitors</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.TotalVisitors / (float)ViewBag.TotalVips * 100)%;" aria-valuenow="@group.TotalVisitors" aria-valuemin="0" aria-valuemax="@ViewBag.TotalVips"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Grouped by Date -->
+        <div class="col-md-3">
+            <div class="card mb-4 h-100 shadow-lg">
+                <div class="card-header bg-dark text-white d-flex align-items-center">
+                    <i class="bi bi-calendar me-2"></i>
+                    <h4>Visits by Date</h4>
+                </div>
+                <div class="card-body" style="overflow-y: auto; max-height: 300px;">
+                    @foreach (var group in ViewBag.GroupedByDate)
+                    {
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <span>@group.Date.ToString("yyyy-MM-dd")</span>
+                                <span>@group.TotalVisitors</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: @((float)group.TotalVisitors / (float)ViewBag.TotalVips * 100)%;" aria-valuenow="@group.TotalVisitors" aria-valuemin="0" aria-valuemax="@ViewBag.TotalVips"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Charts Section -->
+    <div class="row mt-4">
+        <!-- Visits by Visit Type Chart -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Visits by Visit Type</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="visitTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visits by Gate Chart -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Visits by Gate</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="gateChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visits by Date Chart -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Visits by Date</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="visitDateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script>
+    // Parse data from ViewBag
+    const visitTypeGroups = JSON.parse('@Html.Raw(ViewBag.VisitTypeGroups ?? "[]")');
+    const gateGroups = JSON.parse('@Html.Raw(ViewBag.GateGroups ?? "[]")');
+    const visitDateGroups = JSON.parse('@Html.Raw(ViewBag.VisitDateGroups ?? "[]")');
+
+    // Visit Type Chart
+    const visitTypeCtx = document.getElementById('visitTypeChart').getContext('2d');
+    new Chart(visitTypeCtx, {
+        type: 'pie',
+        data: {
+            labels: visitTypeGroups.map(d => d.VisitType || "Unknown"),
+            datasets: [{
+                label: 'Visits by Visit Type',
+                data: visitTypeGroups.map(d => d.TotalVisitors || 0),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Visits by Visit Type'
+                }
+            }
+        }
+    });
+
+    // Gate Chart
+    const gateCtx = document.getElementById('gateChart').getContext('2d');
+    new Chart(gateCtx, {
+        type: 'bar',
+        data: {
+            labels: gateGroups.map(d => d.Gate || "Unknown"),
+            datasets: [{
+                label: 'Visits by Gate',
+                data: gateGroups.map(d => d.TotalVisitors || 0),
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Visits by Gate'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Visit Date Chart
+    const visitDateCtx = document.getElementById('visitDateChart').getContext('2d');
+    new Chart(visitDateCtx, {
+        type: 'line',
+        data: {
+            labels: visitDateGroups.map(d => {
+                const date = new Date(d.Date);
+                return date.toLocaleDateString() || "Unknown";
+            }),
+            datasets: [{
+                label: 'Visits by Date',
+                data: visitDateGroups.map(d => d.TotalVisitors || 0),
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Visits by Date'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Visits'
+                    }
+                }
+            }
+        }
+    });
+</script>
